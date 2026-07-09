@@ -86,4 +86,268 @@
         <div id="startScreen">
             <h1>Neymar Joga Bonito</h1>
             <p style="color: #00df89; font-weight: bold; margin-bottom: 10px;">🏟️ REAL FIELD & CLEAN JERSEY 🏟️</p>
-            <p>Help Neymar run, jump, and dodge
+            <p>Help Neymar run, jump, and dodge soccer balls!</p>
+            <p style="font-size: 0.9rem; color: #ccc; margin-top: 5px;">Tap Screen or Spacebar to JUMP</p>
+            <button class="btn" id="startButton">JOGAR (PLAY)</button>
+        </div>
+
+        <div id="ui">SCORE: <span id="scoreVal">0</span></div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <audio id="bgMusic" loop preload="auto">
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        const ui = document.getElementById('ui');
+        const scoreVal = document.getElementById('scoreVal');
+        const bgMusic = document.getElementById('bgMusic');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let isPlaying = false;
+        let score = 0;
+        let obstacles = [];
+        let gameFrame = 0;
+        let obstacleSpeed = 6;
+        let bgScrollX = 0;
+
+        const neymar = {
+            x: 80,
+            y: 0,
+            width: 90,
+            height: 125,
+            vy: 0,
+            weight: 1.2,
+            groundY: 0,
+            isJumping: false,
+            image: new Image()
+        };
+        
+        // FIXED FILE NAME MATCHES YOUR UPLOAD: 1000023205.jpg
+        neymar.image.src = '1000023205.jpg';
+
+        class Obstacle {
+            constructor() {
+                this.x = canvas.width;
+                this.y = neymar.groundY + neymar.height - 40; 
+                this.size = 40;
+                this.image = new Image();
+                this.image.src = 'ball.png'; 
+            }
+            draw() {
+                if (this.image.complete && this.image.naturalWidth !== 0) {
+                    ctx.drawImage(this.image, this.x, this.y, this.size, this.size);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.size/2, this.y + this.size/2, this.size/2, 0, Math.PI * 2);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = "#000000";
+                    ctx.stroke();
+                    ctx.fillStyle = "#000000";
+                    ctx.font = "20px Arial";
+                    ctx.fillText("⚽", this.x + 8, this.y + 28);
+                }
+            }
+            update() {
+                this.x -= obstacleSpeed;
+                this.draw();
+            }
+        }
+
+        function drawStadiumBackground() {
+            ctx.fillStyle = '#0a0f1d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'rgba(251, 197, 49, 0.12)';
+            ctx.beginPath();
+            ctx.moveTo(150, 0); ctx.lineTo(0, canvas.height); ctx.lineTo(400, canvas.height); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - 150, 0); ctx.lineTo(canvas.width - 400, canvas.height); ctx.lineTo(canvas.width, canvas.height); ctx.fill();
+
+            let standHeight = neymar.groundY + 40;
+            ctx.fillStyle = '#1e293b'; 
+            ctx.fillRect(0, standHeight - 120, canvas.width, 120);
+
+            ctx.save();
+            ctx.translate(-bgScrollX % 100, 0);
+            for (let x = -100; x < canvas.width + 100; x += 15) {
+                for (let y = standHeight - 110; y < standHeight - 20; y += 18) {
+                    ctx.fillStyle = (Math.sin(x + y + gameFrame * 0.1) > 0) ? '#fbc531' : '#20bf6b';
+                    ctx.beginPath();
+                    ctx.arc(x + (y % 10), y + Math.sin(gameFrame * 0.08 + x) * 3, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, standHeight - 10, canvas.width, 15);
+        }
+
+        function drawFootballFieldGrass() {
+            let fieldTop = neymar.groundY + neymar.height;
+            let fieldHeight = canvas.height - fieldTop;
+
+            ctx.fillStyle = "#10ac84";
+            ctx.fillRect(0, fieldTop, canvas.width, fieldHeight);
+
+            ctx.fillStyle = "#0f9b75";
+            let patternWidth = 80;
+            ctx.save();
+            ctx.translate(-bgScrollX % (patternWidth * 2), 0);
+            for (let i = -patternWidth * 2; i < canvas.width + patternWidth * 2; i += patternWidth * 2) {
+                ctx.fillRect(i, fieldTop, patternWidth, fieldHeight);
+            }
+            ctx.restore();
+
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(0, fieldTop + 15);
+            ctx.lineTo(canvas.width, fieldTop + 15);
+            ctx.stroke();
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            canvas.style.display = 'block';
+            ui.style.display = 'block';
+            isPlaying = true;
+            score = 0;
+            scoreVal.innerText = score;
+            obstacles = [];
+            obstacleSpeed = 6;
+            bgScrollX = 0;
+            
+            neymar.groundY = canvas.height - 180;
+            neymar.y = neymar.groundY;
+
+            bgMusic.currentTime = 0;
+            bgMusic.volume = 0.8;
+            bgMusic.play().catch(e => console.log("Audio waiting..."));
+
+            animate();
+        }
+
+        function jump() {
+            if (!neymar.isJumping && isPlaying) {
+                neymar.vy = -22;
+                neymar.isJumping = true;
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') jump();
+        });
+        window.addEventListener('touchstart', (e) => {
+            if (isPlaying) {
+                e.preventDefault();
+                jump();
+            }
+        }, { passive: false });
+        window.addEventListener('mousedown', jump);
+
+        function checkCollision(rect1, rect2) {
+            return (
+                rect1.x < rect2.x + rect2.size - 12 &&
+                rect1.x + rect1.width > rect2.x + 12 &&
+                rect1.y < rect2.y + rect2.size - 12 &&
+                rect1.y + rect1.height > rect2.y + 12
+            );
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            bgMusic.pause();
+            alert("GAME OVER! Score: " + score);
+            startScreen.style.display = 'block';
+            canvas.style.display = 'none';
+            ui.style.display = 'none';
+        }
+
+        // Clean jersey design fallback
+        function drawNeymarFallback(x, y, w, h) {
+            ctx.fillStyle = "#fbc531"; 
+            ctx.fillRect(x + 20, y - 5, w - 40, 15);
+            ctx.fillStyle = "#e0ac69"; 
+            ctx.fillRect(x + 15, y + 10, w - 30, 25);
+            ctx.fillStyle = "#fbc531"; 
+            ctx.fillRect(x + 5, y + 35, w - 10, 45);
+            ctx.fillStyle = "#20bf6b"; 
+            ctx.fillRect(x + 20, y + 35, w - 40, 5);
+            ctx.fillStyle = "#0984e3"; 
+            ctx.fillRect(x + 5, y + 80, w - 10, 25);
+            ctx.fillStyle = "#ffffff"; 
+            ctx.fillRect(x + 15, y + 105, 15, 20);
+            ctx.fillRect(x + w - 30, y + 105, 15, 20);
+        }
+
+        function animate() {
+            if (!isPlaying) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            bgScrollX += 1.8; 
+
+            drawStadiumBackground();
+            drawFootballFieldGrass();
+
+            neymar.y += neymar.vy;
+            if (neymar.y < neymar.groundY) {
+                neymar.vy += neymar.weight;
+            } else {
+                neymar.y = neymar.groundY;
+                neymar.vy = 0;
+                neymar.isJumping = false;
+            }
+
+            if (neymar.image.complete && neymar.image.naturalWidth !== 0) {
+                ctx.drawImage(neymar.image, neymar.x, neymar.y, neymar.width, neymar.height);
+            } else {
+                drawNeymarFallback(neymar.x, neymar.y, neymar.width, neymar.height);
+            }
+
+            if (gameFrame % 115 === 0) {
+                obstacles.push(new Obstacle());
+            }
+
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].update();
+
+                if (checkCollision(neymar, obstacles[i])) {
+                    gameOver();
+                    return;
+                }
+
+                if (obstacles[i].x + obstacles[i].size < 0) {
+                    score++;
+                    scoreVal.innerText = score;
+                    obstacles.splice(i, 1);
+                    i--;
+                    
+                    if (score % 5 === 0) {
+                        obstacleSpeed += 1;
+                    }
+                }
+            }
+
+            gameFrame++;
+            requestAnimationFrame(animate);
+        }
+
+        startButton.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
