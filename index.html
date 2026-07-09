@@ -122,7 +122,7 @@
         const neymar = {
             x: 80,
             y: 0,
-            width: 100, 
+            width: 100, // Slightly bigger to make the imported character look cool
             height: 130,
             vy: 0,
             weight: 1.3,
@@ -131,8 +131,15 @@
             image: new Image()
         };
 
-        // TARGETING YOUR EXACT GITHUB IMAGE FILE NAME
-        neymar.image.src = '54b3ac3f3229bcca8ad080c1a75445ce.jpg'; 
+        // This checks both neymar.png and neymar.jpg as a fallback
+        neymar.image.src = 'neymar.png'; 
+        neymar.image.onerror = function() {
+            // If .png fails, try loading neymar.jpg
+            if (neymar.image.src.indexOf('neymar.png') !== -1) {
+                console.log("PNG failed, trying JPG...");
+                neymar.image.src = 'neymar.jpg';
+            }
+        };
 
         class Obstacle {
             constructor() {
@@ -177,10 +184,12 @@
             neymar.groundY = canvas.height - 200;
             neymar.y = neymar.groundY;
 
+            // Safe play trigger
             bgMusic.currentTime = 0;
             bgMusic.volume = 0.9;
             bgMusic.play().catch(e => {
-                console.log("Audio play blocked, trying fallback...", e);
+                console.log("Audio play blocked by browser, trying reload...", e);
+                // Fallback attempt
                 setTimeout(() => { bgMusic.play(); }, 500);
             });
 
@@ -219,6 +228,7 @@
         }
 
         function drawNeymarFallback(x, y, w, h) {
+            // Brazil Jersey Neymar Design
             ctx.fillStyle = "#000000"; 
             ctx.fillRect(x + 25, y - 10, w - 50, 20);
             ctx.fillStyle = "#e0ac69"; 
@@ -237,7 +247,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Colorful Sky
+            // Sky
             let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             skyGradient.addColorStop(0, '#1a2a6c');
             skyGradient.addColorStop(0.5, '#b21f1f');
@@ -261,7 +271,7 @@
                 neymar.isJumping = false;
             }
 
-            // Draw Neymar Image
+            // Draw Neymar
             if (neymar.image.complete && neymar.image.naturalWidth !== 0) {
                 ctx.drawImage(neymar.image, neymar.x, neymar.y, neymar.width, neymar.height);
             } else {
