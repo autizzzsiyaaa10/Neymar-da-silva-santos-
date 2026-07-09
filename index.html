@@ -1,489 +1,302 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neymar Jr: Ball Control Game</title>
+    <title>Neymar Joga Bonito Run</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
-            background-color: #222;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            background: #111;
+            font-family: 'Arial', sans-serif;
             color: white;
+            user-select: none;
         }
-
-        /* Full Interactive Football Field Background */
-        #game-container {
+        #gameContainer {
             position: relative;
             width: 100vw;
             height: 100vh;
-            max-width: 800px;
-            max-height: 1000px;
-            background: #2e7d32; /* Green grass */
-            border: 4px solid #fff;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, #11998e, #38ef7d);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-
-        /* Football Field Markings */
-        .field-line {
+        #startScreen {
             position: absolute;
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            pointer-events: none;
+            z-index: 10;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            border: 4px solid #fbc531;
+            box-shadow: 0 0 25px rgba(251, 197, 49, 0.6);
         }
-
-        .halfway-line {
-            top: 50%;
-            left: 0;
+        h1 {
+            color: #fbc531;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px #000;
+        }
+        .btn {
+            background: #fbc531;
+            color: black;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 20px;
+            text-transform: uppercase;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            background: #fff;
+        }
+        #gameCanvas {
+            display: none;
             width: 100%;
-            height: 0;
+            height: 100%;
         }
-
-        .center-circle {
-            top: 50%;
-            left: 50%;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .center-spot {
-            top: 50%;
-            left: 50%;
-            width: 8px;
-            height: 8px;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .penalty-box-top {
-            top: 0;
-            left: 50%;
-            width: 240px;
-            height: 100px;
-            border-top: none;
-            transform: translateX(-50%);
-        }
-
-        .penalty-box-bottom {
-            bottom: 0;
-            left: 50%;
-            width: 240px;
-            height: 100px;
-            border-bottom: none;
-            transform: translateX(-50%);
-        }
-
-        /* UI Overlay */
-        #ui-layer {
+        #ui {
             position: absolute;
             top: 20px;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        .hud-panel {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 18px;
+            left: 20px;
+            font-size: 1.8rem;
             font-weight: bold;
-            border: 2px solid #ffeb3b;
-        }
-
-        /* Neymar Character Sprite Container */
-        #neymar {
-            position: absolute;
-            width: 70px;
-            height: 95px;
-            bottom: 120px;
-            left: calc(50% - 35px);
+            text-shadow: 2px 2px black;
+            color: #fbc531;
             z-index: 5;
-            cursor: grab;
-            user-select: none;
-            transition: transform 0.1s ease-out;
-        }
-
-        #neymar:active {
-            cursor: grabbing;
-        }
-
-        /* Soccer Ball Sprite */
-        #ball {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: radial-gradient(circle, #fff 60%, #ccc 100%);
-            border-radius: 50%;
-            border: 2px solid #000;
-            bottom: 230px;
-            left: calc(50% - 20px);
-            z-index: 6;
-            box-shadow: 0 8px 10px rgba(0,0,0,0.4);
-            pointer-events: none;
-        }
-
-        /* Hexagonal panel soccer pattern lines using CSS pseudo-elements */
-        #ball::before {
-            content: '⚽';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 32px;
-            line-height: 1;
-        }
-
-        /* Audio controls & Help Panel */
-        #instructions {
-            position: absolute;
-            bottom: 15px;
-            width: 100%;
-            text-align: center;
-            font-size: 14px;
-            text-shadow: 1px 1px 3px #000;
-            pointer-events: none;
-            color: #fff;
-        }
-
-        /* Sparkles for Juggle Feedback */
-        .sparkle {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #ffeb3b;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: explode 0.4s ease-out forwards;
-            z-index: 8;
-        }
-
-        @keyframes explode {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(0); opacity: 0; }
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div class="field-line halfway-line"></div>
-        <div class="field-line center-circle"></div>
-        <div class="field-line center-spot"></div>
-        <div class="field-line penalty-box-top"></div>
-        <div class="field-line penalty-box-bottom"></div>
-
-        <div id="ui-layer">
-            <div class="hud-panel" id="score-board">Juggles: 0</div>
-            <div class="hud-panel" id="high-score">Best: 0</div>
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h1>Neymar Joga Bonito</h1>
+            <p style="color: #00df89; font-weight: bold; margin-bottom: 10px;">🎶 PARADO NO BAILÃO VERSION 🎶</p>
+            <p>Help Neymar run, jump, and dodge soccer balls!</p>
+            <p style="font-size: 0.9rem; color: #ccc; margin-top: 5px;">Tap Screen or Spacebar to JUMP</p>
+            <button class="btn" id="startButton">JOGAR (PLAY)</button>
         </div>
 
-        <div id="neymar">
-            <canvas id="neymarCanvas" width="70" height="95"></canvas>
-        </div>
-
-        <div id="ball"></div>
-
-        <div id="instructions">Drag/Swipe Neymar to keep the ball in the air! ⚽</div>
+        <div id="ui">SCORE: <span id="scoreVal">0</span></div>
+        <canvas id="gameCanvas"></canvas>
     </div>
 
-    <script>
-        // Draw the Custom Neymar Character with Brown Hair, Detailed Face, and Yellow Jersey No. 10
-        const canvas = document.getElementById('neymarCanvas');
-        const ctx = canvas.getContext('2d');
+    <audio id="bgMusic" loop preload="auto">
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
 
-        function drawNeymar(hasBallImpact = false) {
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        const ui = document.getElementById('ui');
+        const scoreVal = document.getElementById('scoreVal');
+        const bgMusic = document.getElementById('bgMusic');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let isPlaying = false;
+        let score = 0;
+        let obstacles = [];
+        let gameFrame = 0;
+        let obstacleSpeed = 7;
+
+        const neymar = {
+            x: 80,
+            y: 0,
+            width: 110, // Adjusted for your cartoon character aspect ratio
+            height: 140,
+            vy: 0,
+            weight: 1.3,
+            groundY: 0,
+            isJumping: false,
+            image: new Image()
+        };
+
+        // Loading the exact file name you uploaded!
+        neymar.image.src = '1000023198.jpg'; 
+
+        class Obstacle {
+            constructor() {
+                this.x = canvas.width;
+                this.y = neymar.groundY + neymar.height - 40; 
+                this.size = 45;
+                this.image = new Image();
+                this.image.src = 'ball.png'; 
+            }
+            draw() {
+                if (this.image.complete && this.image.naturalWidth !== 0) {
+                    ctx.drawImage(this.image, this.x, this.y, this.size, this.size);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.size/2, this.y + this.size/2, this.size/2, 0, Math.PI * 2);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "#000000";
+                    ctx.stroke();
+                    ctx.fillStyle = "#000000";
+                    ctx.font = "22px Arial";
+                    ctx.fillText("⚽", this.x + 8, this.y + 30);
+                }
+            }
+            update() {
+                this.x -= obstacleSpeed;
+                this.draw();
+            }
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            canvas.style.display = 'block';
+            ui.style.display = 'block';
+            isPlaying = true;
+            score = 0;
+            scoreVal.innerText = score;
+            obstacles = [];
+            obstacleSpeed = 7;
+            
+            neymar.groundY = canvas.height - 210;
+            neymar.y = neymar.groundY;
+
+            bgMusic.currentTime = 0;
+            bgMusic.volume = 0.9;
+            bgMusic.play().catch(e => {
+                console.log("Audio play blocked, retrying...", e);
+                setTimeout(() => { bgMusic.play(); }, 500);
+            });
+
+            animate();
+        }
+
+        function jump() {
+            if (!neymar.isJumping) {
+                neymar.vy = -24;
+                neymar.isJumping = true;
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') jump();
+        });
+        window.addEventListener('touchstart', jump);
+        window.addEventListener('mousedown', jump);
+
+        function checkCollision(rect1, rect2) {
+            return (
+                rect1.x < rect2.x + rect2.size - 15 &&
+                rect1.x + rect1.width > rect2.x + 15 &&
+                rect1.y < rect2.y + rect2.size - 15 &&
+                rect1.y + rect1.height > rect2.y + 15
+            );
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            bgMusic.pause();
+            alert("GAME OVER! Score: " + score);
+            startScreen.style.display = 'block';
+            canvas.style.display = 'none';
+            ui.style.display = 'none';
+        }
+
+        function drawNeymarFallback(x, y, w, h) {
+            ctx.fillStyle = "#000000"; 
+            ctx.fillRect(x + 25, y - 10, w - 50, 20);
+            ctx.fillStyle = "#e0ac69"; 
+            ctx.fillRect(x + 20, y + 10, w - 40, 30);
+            ctx.fillStyle = "#fbc531"; 
+            ctx.fillRect(x + 10, y + 40, w - 20, 50);
+            ctx.fillStyle = "#008000"; 
+            ctx.font = "bold 22px Arial";
+            ctx.fillText("10", x + 32, y + 75);
+            ctx.fillStyle = "#0000ff"; 
+            ctx.fillRect(x + 10, y + 90, w - 20, 25);
+        }
+
+        function animate() {
+            if (!isPlaying) return;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Legs/Cleats
-            ctx.fillStyle = '#000'; // Cleats
-            ctx.fillRect(15, 80, 12, 10);
-            ctx.fillRect(43, 80, 12, 10);
+            // Colorful Sky
+            let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#1a2a6c');
+            skyGradient.addColorStop(0.5, '#b21f1f');
+            skyGradient.addColorStop(1, '#fdbb2d');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = '#fff'; // White socks
-            ctx.fillRect(18, 65, 8, 15);
-            ctx.fillRect(44, 65, 8, 15);
+            // Ground
+            ctx.fillStyle = "#20bf6b";
+            ctx.fillRect(0, neymar.groundY + neymar.height, canvas.width, 300);
 
-            // Blue Shorts
-            ctx.fillStyle = '#002f6c'; 
-            ctx.fillRect(15, 52, 40, 15);
+            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.fillRect(0, neymar.groundY + neymar.height + 15, canvas.width, 10);
 
-            // Yellow Brasil Jersey (Torso)
-            ctx.fillStyle = '#fed100'; 
-            ctx.beginPath();
-            ctx.moveTo(15, 25);
-            ctx.lineTo(55, 25);
-            ctx.lineTo(55, 55);
-            ctx.lineTo(15, 55);
-            ctx.closePath();
-            ctx.fill();
-
-            // Sleeves
-            ctx.fillStyle = '#fed100';
-            ctx.fillRect(5, 25, 10, 12);
-            ctx.fillRect(55, 25, 10, 12);
-
-            // Green Collar V-Neck
-            ctx.fillStyle = '#009739';
-            ctx.beginPath();
-            ctx.moveTo(30, 25);
-            ctx.lineTo(40, 25);
-            ctx.lineTo(35, 31);
-            ctx.closePath();
-            ctx.fill();
-
-            // Iconic Jersey Number 10 (Front)
-            ctx.fillStyle = '#002f6c';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('10', 35, 45);
-
-            // Neck
-            ctx.fillStyle = '#dfb18a'; // Brazilian skin-tone
-            ctx.fillRect(31, 20, 8, 7);
-
-            // Head & Face Details
-            ctx.fillStyle = '#dfb18a';
-            ctx.beginPath();
-            ctx.arc(35, 14, 10, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Face details (Eyes & Mouth)
-            ctx.fillStyle = '#3e2723'; // Dark brown eyes
-            ctx.fillRect(31, 12, 2, 2);
-            ctx.fillRect(37, 12, 2, 2);
-            // Eyebrows
-            ctx.fillRect(30, 9, 3, 1);
-            ctx.fillRect(36, 9, 3, 1);
-            // Smile
-            ctx.strokeStyle = '#a1553d';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(35, 16, 4, 0, Math.PI);
-            ctx.stroke();
-
-            // Neymar's Dark Brown Hair (Messy Spikes/Fade)
-            ctx.fillStyle = '#4a2c11'; // Brown Hair Color
-            ctx.beginPath();
-            ctx.arc(35, 7, 10, Math.PI, 0); // Rounded top hair dome
-            ctx.fill();
-
-            // Messy Hair Tufts/Sideburns
-            ctx.beginPath();
-            ctx.moveTo(25, 9);
-            ctx.lineTo(22, 14);
-            ctx.lineTo(27, 11);
-            ctx.moveTo(45, 9);
-            ctx.lineTo(48, 14);
-            ctx.lineTo(43, 11);
-            ctx.closePath();
-            ctx.fill();
-
-            // Expressive Action (Head tilt on Ball Impact)
-            if (hasBallImpact) {
-                ctx.fillStyle = '#ffeb3b';
-                ctx.beginPath();
-                ctx.arc(35, -2, 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        // Initial Draw of Neymar Character Model
-        drawNeymar();
-
-        // Game Physics & Logic Variables
-        const container = document.getElementById('game-container');
-        const ball = document.getElementById('ball');
-        const player = document.getElementById('neymar');
-        const scoreBoard = document.getElementById('score-board');
-        const highScoreBoard = document.getElementById('high-score');
-
-        let score = 0;
-        let highScore = 0;
-
-        // Ball physical states
-        let ballX = window.innerWidth > 800 ? 380 : (window.innerWidth / 2) - 20;
-        let ballY = 400; 
-        let velX = (Math.random() - 0.5) * 6;
-        let velY = -5;
-        const gravity = 0.32;
-        const bounceDamping = 0.85;
-
-        // Player Positioning States
-        let playerX = (container.clientWidth / 2) - 35;
-        let playerY = container.clientHeight - 160;
-        let isDragging = false;
-        let touchOffset = 0;
-
-        // Update High Score Display
-        if (localStorage.getItem('neymarHighScore')) {
-            highScore = parseInt(localStorage.getItem('neymarHighScore'));
-            highScoreBoard.textContent = `Best: ${highScore}`;
-        }
-
-        // Track Pointer Movement (Mouse & Touch compatible)
-        function movePlayer(clientX) {
-            const containerBounds = container.getBoundingClientRect();
-            let relativeX = clientX - containerBounds.left;
-            
-            // Constrain Player inside Field Horizontal Boundaries
-            playerX = Math.max(0, Math.min(container.clientWidth - 70, relativeX - 35));
-            player.style.transform = `translateX(${playerX}px)`;
-        }
-
-        // Pointer Drag Events
-        container.addEventListener('mousemove', (e) => {
-            movePlayer(e.clientX);
-        });
-
-        container.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                movePlayer(e.touches[0].clientX);
-            }
-            e.preventDefault();
-        }, { passive: false });
-
-        // Physics Loop
-        function updatePhysics() {
-            // Apply Gravity
-            velY += gravity;
-            
-            // Apply Velocity
-            ballX += velX;
-            ballY += velY;
-
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-
-            // Side Wall Collisions
-            if (ballX <= 0) {
-                ballX = 0;
-                velX = -velX * bounceDamping;
-            } else if (ballX >= containerWidth - 40) {
-                ballX = containerWidth - 40;
-                velX = -velX * bounceDamping;
+            neymar.y += neymar.vy;
+            if (neymar.y < neymar.groundY) {
+                neymar.vy += neymar.weight;
+            } else {
+                neymar.y = neymar.groundY;
+                neymar.vy = 0;
+                neymar.isJumping = false;
             }
 
-            // Top Ceiling Collision
-            if (ballY <= 0) {
-                ballY = 0;
-                velY = -velY * bounceDamping;
+            // Draw Neymar Cute Cartoon Character
+            if (neymar.image.complete && neymar.image.naturalWidth !== 0) {
+                ctx.drawImage(neymar.image, neymar.x, neymar.y, neymar.width, neymar.height);
+            } else {
+                drawNeymarFallback(neymar.x, neymar.y, neymar.width, neymar.height);
             }
 
-            // Check Neymar Player Collision (AABB style hit registration)
-            const ballCenter = { x: ballX + 20, y: ballY + 20 };
-            const neymarBounds = {
-                left: playerX,
-                right: playerX + 70,
-                top: playerY,
-                bottom: playerY + 85
-            };
+            if (gameFrame % 110 === 0) {
+                obstacles.push(new Obstacle());
+            }
 
-            if (
-                ballCenter.x >= neymarBounds.left - 10 &&
-                ballCenter.x <= neymarBounds.right + 10 &&
-                ballCenter.y >= neymarBounds.top - 15 &&
-                ballCenter.y <= neymarBounds.bottom
-            ) {
-                // Determine collision hit vector angle based on where ball hits Neymar
-                const hitPointRelative = (ballCenter.x - (playerX + 35)) / 35; // Value between -1 and 1
-                
-                // Repel Ball Upwards
-                velY = -Math.abs(velY) * 1.05 - 3.5; 
-                if (velY < -15) velY = -15; // Speed cap
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].update();
 
-                // Add horizontal spin based on player movement or hit angle
-                velX = hitPointRelative * 8;
+                if (checkCollision(neymar, obstacles[i])) {
+                    gameOver();
+                    return;
+                }
 
-                // Adjust Ball height slightly to prevent sticky collision frames
-                ballY = neymarBounds.top - 38;
-
-                // Hit Success Action
-                score++;
-                scoreBoard.textContent = `Juggles: ${score}`;
-                
-                // Trigger visual bounce animation
-                drawNeymar(true);
-                setTimeout(() => drawNeymar(false), 150);
-
-                // Spawn Sparkles Feedback
-                createSparkle(ballCenter.x, ballCenter.y);
-
-                if (score > highScore) {
-                    highScore = score;
-                    localStorage.setItem('neymarHighScore', highScore);
-                    highScoreBoard.textContent = `Best: ${highScore}`;
+                if (obstacles[i].x + obstacles[i].size < 0) {
+                    score++;
+                    scoreVal.innerText = score;
+                    obstacles.splice(i, 1);
+                    i--;
+                    
+                    if (score % 5 === 0) {
+                        obstacleSpeed += 1.2;
+                    }
                 }
             }
 
-            // Ground/Out-Of-Bounds Reset Condition
-            if (ballY > containerHeight) {
-                // Game Over - Reset Ball to center kickoff
-                score = 0;
-                scoreBoard.textContent = `Juggles: 0`;
-                ballX = containerWidth / 2 - 20;
-                ballY = 150;
-                velY = 0;
-                velX = (Math.random() - 0.5) * 5;
-            }
-
-            // Apply calculated positions directly to DOM element
-            ball.style.left = `${ballX}px`;
-            ball.style.top = `${ballY}px`;
-
-            requestAnimationFrame(updatePhysics);
+            gameFrame++;
+            requestAnimationFrame(animate);
         }
 
-        // Particle Effect Generator
-        function createSparkle(x, y) {
-            for (let i = 0; i < 6; i++) {
-                const sparkle = document.createElement('div');
-                sparkle.classList.add('sparkle');
-                sparkle.style.left = `${x}px`;
-                sparkle.style.top = `${y}px`;
-                
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 30 + 10;
-                const dx = Math.cos(angle) * distance;
-                const dy = Math.sin(angle) * distance;
-
-                sparkle.style.setProperty('--dx', `${dx}px`);
-                sparkle.style.setProperty('--dy', `${dy}px`);
-                
-                container.appendChild(sparkle);
-                
-                // Animate dynamically
-                sparkle.animate([
-                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-                    { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
-                ], {
-                    duration: 400,
-                    easing: 'ease-out'
-                });
-
-                setTimeout(() => sparkle.remove(), 400);
-            }
-        }
-
-        // Start Physics Engine
-        updatePhysics();
+        startButton.addEventListener('click', startGame);
     </script>
 </body>
 </html>
