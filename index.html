@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+
+            <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
     <title>Neymar Joga Bonito Run</title>
     <style>
         * {
@@ -16,12 +17,13 @@
             font-family: 'Arial', sans-serif;
             color: white;
             user-select: none;
+            -webkit-user-select: none;
         }
         #gameContainer {
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(to bottom, #11998e, #38ef7d);
+            background: #111;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -30,15 +32,16 @@
             position: absolute;
             z-index: 10;
             text-align: center;
-            background: rgba(0, 0, 0, 0.95);
-            padding: 30px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 25px;
             border-radius: 15px;
             border: 4px solid #fbc531;
-            box-shadow: 0 0 25px rgba(251, 197, 49, 0.6);
+            box-shadow: 0 0 20px rgba(251, 197, 49, 0.5);
+            max-width: 90%;
         }
         h1 {
             color: #fbc531;
-            font-size: 2.2rem;
+            font-size: 2rem;
             margin-bottom: 10px;
             text-transform: uppercase;
             text-shadow: 2px 2px #000;
@@ -47,13 +50,13 @@
             background: #fbc531;
             color: black;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.4rem;
+            padding: 12px 35px;
+            font-size: 1.2rem;
             font-weight: bold;
             border-radius: 30px;
             cursor: pointer;
             transition: 0.2s;
-            margin-top: 20px;
+            margin-top: 15px;
             text-transform: uppercase;
         }
         .btn:hover {
@@ -69,7 +72,7 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: bold;
             text-shadow: 2px 2px black;
             color: #fbc531;
@@ -83,7 +86,7 @@
     <div id="gameContainer">
         <div id="startScreen">
             <h1>Neymar Joga Bonito</h1>
-            <p style="color: #00df89; font-weight: bold; margin-bottom: 10px;">🎶 PARADO NO BAILÃO VERSION 🎶</p>
+            <p style="color: #00df89; font-weight: bold; margin-bottom: 10px;">🏟️ STADIUM CROWD VERSION 🏟️</p>
             <p>Help Neymar run, jump, and dodge soccer balls!</p>
             <p style="font-size: 0.9rem; color: #ccc; margin-top: 5px;">Tap Screen or Spacebar to JUMP</p>
             <button class="btn" id="startButton">JOGAR (PLAY)</button>
@@ -117,28 +120,27 @@
         let score = 0;
         let obstacles = [];
         let gameFrame = 0;
-        let obstacleSpeed = 7;
+        let obstacleSpeed = 6;
+        let bgScrollX = 0;
 
         const neymar = {
             x: 80,
             y: 0,
-            width: 110, // Adjusted for your cartoon character aspect ratio
-            height: 140,
+            width: 90,
+            height: 125,
             vy: 0,
-            weight: 1.3,
+            weight: 1.2,
             groundY: 0,
             isJumping: false,
             image: new Image()
         };
-
-        // Loading the exact file name you uploaded!
-        neymar.image.src = '1000023198.jpg'; 
+        neymar.image.src = '1000023198.jpg';
 
         class Obstacle {
             constructor() {
                 this.x = canvas.width;
                 this.y = neymar.groundY + neymar.height - 40; 
-                this.size = 45;
+                this.size = 40;
                 this.image = new Image();
                 this.image.src = 'ball.png'; 
             }
@@ -150,18 +152,55 @@
                     ctx.arc(this.x + this.size/2, this.y + this.size/2, this.size/2, 0, Math.PI * 2);
                     ctx.fillStyle = "#ffffff";
                     ctx.fill();
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 2;
                     ctx.strokeStyle = "#000000";
                     ctx.stroke();
                     ctx.fillStyle = "#000000";
-                    ctx.font = "22px Arial";
-                    ctx.fillText("⚽", this.x + 8, this.y + 30);
+                    ctx.font = "20px Arial";
+                    ctx.fillText("⚽", this.x + 8, this.y + 28);
                 }
             }
             update() {
                 this.x -= obstacleSpeed;
                 this.draw();
             }
+        }
+
+        // Draws moving stadium fans background
+        function drawStadiumBackground() {
+            // Dark night sky
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Bright yellow stadium floodlights
+            ctx.fillStyle = 'rgba(251, 197, 49, 0.15)';
+            ctx.beginPath();
+            ctx.moveTo(100, 0); ctx.lineTo(0, canvas.height); ctx.lineTo(300, canvas.height); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - 100, 0); ctx.lineTo(canvas.width - 300, canvas.height); ctx.lineTo(canvas.width, canvas.height); ctx.fill();
+
+            // Parallax Stadium stands scrolling effect
+            let standHeight = neymar.groundY + 40;
+            ctx.fillStyle = '#1e293b'; // Back stands
+            ctx.fillRect(0, standHeight - 120, canvas.width, 120);
+
+            // Drawing colorful crowds of fans (Yellow and Green dots for Brazil flag colors!)
+            ctx.save();
+            ctx.translate(-bgScrollX % 100, 0);
+            for (let x = -100; x < canvas.width + 100; x += 15) {
+                for (let y = standHeight - 110; y < standHeight - 20; y += 18) {
+                    // Random yellow/green dot fans waving/cheering
+                    ctx.fillStyle = (Math.sin(x + y + gameFrame * 0.1) > 0) ? '#fbc531' : '#20bf6b';
+                    ctx.beginPath();
+                    ctx.arc(x + (y % 10), y + Math.sin(gameFrame * 0.08 + x) * 3, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+
+            // Stadium Roof/Frame
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, standHeight - 10, canvas.width, 15);
         }
 
         function startGame() {
@@ -172,24 +211,22 @@
             score = 0;
             scoreVal.innerText = score;
             obstacles = [];
-            obstacleSpeed = 7;
+            obstacleSpeed = 6;
+            bgScrollX = 0;
             
-            neymar.groundY = canvas.height - 210;
+            neymar.groundY = canvas.height - 180;
             neymar.y = neymar.groundY;
 
             bgMusic.currentTime = 0;
-            bgMusic.volume = 0.9;
-            bgMusic.play().catch(e => {
-                console.log("Audio play blocked, retrying...", e);
-                setTimeout(() => { bgMusic.play(); }, 500);
-            });
+            bgMusic.volume = 0.8;
+            bgMusic.play().catch(e => console.log("Audio play deferred..."));
 
             animate();
         }
 
         function jump() {
-            if (!neymar.isJumping) {
-                neymar.vy = -24;
+            if (!neymar.isJumping && isPlaying) {
+                neymar.vy = -22;
                 neymar.isJumping = true;
             }
         }
@@ -197,15 +234,20 @@
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.code === 'ArrowUp') jump();
         });
-        window.addEventListener('touchstart', jump);
+        window.addEventListener('touchstart', (e) => {
+            if (isPlaying) {
+                e.preventDefault();
+                jump();
+            }
+        }, { passive: false });
         window.addEventListener('mousedown', jump);
 
         function checkCollision(rect1, rect2) {
             return (
-                rect1.x < rect2.x + rect2.size - 15 &&
-                rect1.x + rect1.width > rect2.x + 15 &&
-                rect1.y < rect2.y + rect2.size - 15 &&
-                rect1.y + rect1.height > rect2.y + 15
+                rect1.x < rect2.x + rect2.size - 12 &&
+                rect1.x + rect1.width > rect2.x + 12 &&
+                rect1.y < rect2.y + rect2.size - 12 &&
+                rect1.y + rect1.height > rect2.y + 12
             );
         }
 
@@ -219,17 +261,19 @@
         }
 
         function drawNeymarFallback(x, y, w, h) {
-            ctx.fillStyle = "#000000"; 
-            ctx.fillRect(x + 25, y - 10, w - 50, 20);
-            ctx.fillStyle = "#e0ac69"; 
-            ctx.fillRect(x + 20, y + 10, w - 40, 30);
             ctx.fillStyle = "#fbc531"; 
-            ctx.fillRect(x + 10, y + 40, w - 20, 50);
-            ctx.fillStyle = "#008000"; 
-            ctx.font = "bold 22px Arial";
-            ctx.fillText("10", x + 32, y + 75);
-            ctx.fillStyle = "#0000ff"; 
-            ctx.fillRect(x + 10, y + 90, w - 20, 25);
+            ctx.fillRect(x + 20, y - 5, w - 40, 15);
+            ctx.fillStyle = "#e0ac69"; 
+            ctx.fillRect(x + 15, y + 10, w - 30, 25);
+            ctx.fillStyle = "#fbc531"; 
+            ctx.fillRect(x + 5, y + 35, w - 10, 45);
+            ctx.fillStyle = "#20bf6b"; 
+            ctx.fillRect(x + 20, y + 35, w - 40, 5);
+            ctx.fillStyle = "#0984e3"; 
+            ctx.fillRect(x + 5, y + 80, w - 10, 25);
+            ctx.fillStyle = "#ffffff"; 
+            ctx.fillRect(x + 15, y + 105, 15, 20);
+            ctx.fillRect(x + w - 30, y + 105, 15, 20);
         }
 
         function animate() {
@@ -237,21 +281,19 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Colorful Sky
-            let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            skyGradient.addColorStop(0, '#1a2a6c');
-            skyGradient.addColorStop(0.5, '#b21f1f');
-            skyGradient.addColorStop(1, '#fdbb2d');
-            ctx.fillStyle = skyGradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Scroll stadium fans background
+            bgScrollX += 1.5;
+            drawStadiumBackground();
 
-            // Ground
-            ctx.fillStyle = "#20bf6b";
+            // Field Grass (Ground)
+            ctx.fillStyle = "#10ac84";
             ctx.fillRect(0, neymar.groundY + neymar.height, canvas.width, 300);
 
-            ctx.fillStyle = "rgba(255,255,255,0.6)";
-            ctx.fillRect(0, neymar.groundY + neymar.height + 15, canvas.width, 10);
+            // Field White Line
+            ctx.fillStyle = "rgba(255,255,255,0.4)";
+            ctx.fillRect(0, neymar.groundY + neymar.height + 15, canvas.width, 8);
 
+            // Gravity Physics
             neymar.y += neymar.vy;
             if (neymar.y < neymar.groundY) {
                 neymar.vy += neymar.weight;
@@ -261,17 +303,19 @@
                 neymar.isJumping = false;
             }
 
-            // Draw Neymar Cute Cartoon Character
+            // Draw Neymar Cute Blonde Character
             if (neymar.image.complete && neymar.image.naturalWidth !== 0) {
                 ctx.drawImage(neymar.image, neymar.x, neymar.y, neymar.width, neymar.height);
             } else {
                 drawNeymarFallback(neymar.x, neymar.y, neymar.width, neymar.height);
             }
 
-            if (gameFrame % 110 === 0) {
+            // Spawn Obstacles
+            if (gameFrame % 115 === 0) {
                 obstacles.push(new Obstacle());
             }
 
+            // Handle Soccer Balls
             for (let i = 0; i < obstacles.length; i++) {
                 obstacles[i].update();
 
@@ -287,7 +331,7 @@
                     i--;
                     
                     if (score % 5 === 0) {
-                        obstacleSpeed += 1.2;
+                        obstacleSpeed += 1;
                     }
                 }
             }
