@@ -1,339 +1,268 @@
-<!DOCTYPE html>
+            <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neymar Run - O Jogo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neymar Joga Bonito Run</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            user-select: none;
+            box-sizing: border-box;
         }
         body {
-            background: #009c3b; /* Brazil Green */
-            font-family: 'Arial Black', sans-serif;
             overflow: hidden;
+            background: #111;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            user-select: none;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
         }
-        #game-container {
-            position: relative;
-            width: 100%;
-            max-width: 450px;
-            height: 100vh;
-            background: linear-gradient(to bottom, #74ebd5, #9ecee6); /* Aesthetic sky */
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-        }
-        /* Stadium/Pitch Background perspective */
-        #pitch {
+        #startScreen {
             position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 60%;
-            background: repeating-linear-gradient(0deg, #00b33c, #00b33c 20px, #009c3b 20px, #009c3b 40px);
-            clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+            z-index: 10;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid #00df89;
+            box-shadow: 0 0 20px rgba(0, 223, 137, 0.5);
         }
-        /* UI Elements */
+        h1 {
+            color: #00df89;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px #000;
+        }
+        .btn {
+            background: #00df89;
+            color: black;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 15px;
+        }
+        .btn:hover {
+            transform: scale(1.1);
+            background: #fff;
+        }
+        #gameCanvas {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
+        }
         #ui {
             position: absolute;
             top: 20px;
             left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            color: #fff;
-            text-shadow: 2px 2px #000;
-            font-size: 20px;
-            z-index: 10;
-        }
-        #score-box, #gold-box {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px 15px;
-            border-radius: 20px;
-            border: 2px solid #ffdf00; /* Brazil Yellow */
-        }
-        /* Neymar Player */
-        #player {
-            position: absolute;
-            bottom: 40px;
-            width: 60px;
-            height: 90px;
-            background: #ffdf00; /* Placeholder: Yellow Jersey */
-            border-radius: 10px;
-            transition: left 0.15s ease-out;
-            z-index: 5;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 12px;
+            font-size: 1.5rem;
             font-weight: bold;
-            color: #002244;
-            box-shadow: 0 10px 10px rgba(0,0,0,0.3);
-            border: 3px solid #0052b4;
-        }
-        #player::after {
-            content: 'NJR 10';
-            font-size: 14px;
-        }
-        /* Obstacles & Collectibles */
-        .obstacle {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            background: #ff3333; 
-            border-radius: 5px;
-            z-index: 4;
-        }
-        .coin {
-            position: absolute;
-            width: 35px;
-            height: 35px;
-            background: #ffdf00;
-            border-radius: 50%;
-            border: 3px dashed #fff;
-            z-index: 4;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-        /* Screen Overlays */
-        .screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 20;
-            text-align: center;
-            padding: 20px;
-        }
-        .screen h1 {
-            color: #ffdf00;
-            font-size: 40px;
-            margin-bottom: 10px;
-            text-shadow: 3px 3px #0052b4;
-        }
-        .btn {
-            background: #009c3b;
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 22px;
-            border-radius: 30px;
-            cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 5px #005b22;
-            font-family: inherit;
-        }
-        .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 1px #005b22;
-        }
-        /* Mobile Controls Overlay */
-        #controls-hint {
-            position: absolute;
-            bottom: 15px;
-            width: 100%;
-            text-align: center;
-            color: rgba(255,255,255,0.7);
-            font-size: 12px;
-            z-index: 10;
+            text-shadow: 2px 2px black;
+            z-index: 5;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="ui">
-        <div id="score-box">SCORE: <span id="score">0</span></div>
-        <div id="gold-box">⚽: <span id="coins">0</span></div>
-    </div>
-    
-    <div id="pitch"></div>
-    <div id="player"></div>
-    <div id="controls-hint">Swipe or Use Left/Right Arrow Keys</div>
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h1>Neymar Joga Bonito Run</h1>
+            <p>Help Neymar run, jump, and score points!</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: #ccc;">Controls: Tap Screen to Jump</p>
+            <button class="btn" id="startButton">JOGAR (PLAY)</button>
+        </div>
 
-    <div id="start-screen" class="screen">
-        <h1>NEYMAR RUN</h1>
-        <p>Dribble past obstacles and collect golden soccer balls!</p>
-        <button class="btn" onclick="startGame()">JOGAR (PLAY)</button>
+        <div id="ui">SCORE: <span id="scoreVal">0</span></div>
+
+        <canvas id="gameCanvas"></canvas>
     </div>
 
-    <div id="gameover-screen" class="screen" style="display: none;">
-        <h1>Ousadia e Alegria!</h1>
-        <p>You tripped!</p>
-        <p style="margin-top: 10px;">Final Score: <span id="final-score">0</span></p>
-        <button class="btn" onclick="startGame()">TRY AGAIN</button>
-    </div>
-</div>
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
 
-<script>
-    const container = document.getElementById('game-container');
-    const player = document.getElementById('player');
-    const scoreEl = document.getElementById('score');
-    const coinsEl = document.getElementById('coins');
-    const startScreen = document.getElementById('start-screen');
-    const gameoverScreen = document.getElementById('gameover-screen');
-    const finalScoreEl = document.getElementById('final-score');
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        const ui = document.getElementById('ui');
+        const scoreVal = document.getElementById('scoreVal');
+        const bgMusic = document.getElementById('bgMusic');
 
-    // Direct streaming link to Parado no Bailão
-    const bgMusic = new Audio('https://archive.org/download/parado-no-bailao-m-c-val-m-c-ld/Parado%20No%20Bail%C3%A3o%20-%20MC%20Val%20%26%20MC%20LD.mp3'); 
-    bgMusic.loop = true;
-    bgMusic.volume = 0.5;
-
-    // Lanes system
-    const lanes = [15, 50, 85]; 
-    let currentLane = 1; 
-    
-    let gameActive = false;
-    let score = 0;
-    let coins = 0;
-    let gameSpeed = 5;
-    let spawnTimer = 0;
-    let entities = [];
-
-    function updatePlayerPosition() {
-        player.style.left = `calc(${lanes[currentLane]}% - 30px)`;
-    }
-    updatePlayerPosition();
-
-    // Controls
-    window.addEventListener('keydown', (e) => {
-        if (!gameActive) return;
-        if (e.key === 'ArrowLeft' && currentLane > 0) {
-            currentLane--;
-        } else if (e.key === 'ArrowRight' && currentLane < 2) {
-            currentLane++;
+        // Set full screen canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-        updatePlayerPosition();
-    });
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-    // Mobile Swipe Controls
-    let touchStartX = 0;
-    container.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX, {passive: true});
-    container.addEventListener('touchend', e => {
-        if (!gameActive) return;
-        let diffX = e.changedTouches[0].clientX - touchStartX;
-        if (Math.abs(diffX) > 40) {
-            if (diffX > 0 && currentLane < 2) currentLane++;
-            else if (diffX < 0 && currentLane > 0) currentLane--;
-            updatePlayerPosition();
+        let isPlaying = false;
+        let score = 0;
+        let obstacles = [];
+        let gameFrame = 0;
+        let obstacleSpeed = 6;
+
+        // Neymar Character Object
+        const neymar = {
+            x: 100,
+            y: 0,
+            width: 80,
+            height: 110,
+            vy: 0,
+            weight: 1.2,
+            groundY: 0,
+            isJumping: false,
+            // Neymar Jr. Cartoon Sprite/Pic
+            image: new Image()
+        };
+        neymar.image.src = 'https://i.imgur.com/zWp72B8.png'; // Transparent Neymar Running Sprite
+
+        // Obstacle (Soccer Ball)
+        class Obstacle {
+            constructor() {
+                this.x = canvas.width;
+                this.y = neymar.groundY + neymar.height - 50; // Align with ground
+                this.size = 50;
+                this.image = new Image();
+                this.image.src = 'https://i.imgur.com/XF9xJ8K.png'; // Soccer ball image
+            }
+            draw() {
+                ctx.drawImage(this.image, this.x, this.y, this.size, this.size);
+            }
+            update() {
+                this.x -= obstacleSpeed;
+                this.draw();
+            }
         }
-    }, {passive: true});
 
-    function startGame() {
-        // Music plays immediately on start
-        bgMusic.play().catch(error => console.log("Audio waiting for user click interaction:", error));
+        function startGame() {
+            startScreen.style.display = 'none';
+            canvas.style.display = 'block';
+            ui.style.display = 'block';
+            isPlaying = true;
+            score = 0;
+            obstacles = [];
+            obstacleSpeed = 6;
+            
+            // Set Player Initial Position based on screen height
+            neymar.groundY = canvas.height - 180;
+            neymar.y = neymar.groundY;
 
-        // Reset variables
-        score = 0;
-        coins = 0;
-        gameSpeed = 6;
-        entities.forEach(ent => ent.el.remove());
-        entities = [];
-        currentLane = 1;
-        updatePlayerPosition();
-        
-        scoreEl.innerText = score;
-        coinsEl.innerText = coins;
-        
-        startScreen.style.display = 'none';
-        gameoverScreen.style.display = 'none';
-        gameActive = true;
-    }
+            // Start Audio
+            bgMusic.currentTime = 0;
+            bgMusic.play().catch(e => console.log("Audio play needs interaction"));
 
-    function gameOver() {
-        gameActive = false;
-        bgMusic.pause(); 
-        bgMusic.currentTime = 0; 
-        finalScoreEl.innerText = score;
-        gameoverScreen.style.display = 'flex';
-    }
+            animate();
+        }
 
-    // Game Loop
-    function update() {
-        if (gameActive) {
-            score++;
-            scoreEl.innerText = score;
-            if (score % 500 === 0) gameSpeed += 0.5;
+        // Jump Controls
+        function jump() {
+            if (!neymar.isJumping) {
+                neymar.vy = -22;
+                neymar.isJumping = true;
+            }
+        }
 
-            // Spawn elements
-            spawnTimer++;
-            if (spawnTimer > 40) {
-                spawnTimer = 0;
-                let randomLane = Math.floor(Math.random() * 3);
-                let isCoin = Math.random() > 0.4;
-                
-                let el = document.createElement('div');
-                el.className = isCoin ? 'coin' : 'obstacle';
-                
-                if (!isCoin) {
-                    el.style.background = Math.random() > 0.5 ? '#ffcc00' : '#ff3333'; 
-                    el.innerText = '🟥';
-                    el.style.display = 'flex';
-                    el.style.justifyContent = 'center';
-                    el.style.alignItems = 'center';
-                } else {
-                    el.innerText = '⚽';
-                    el.style.display = 'flex';
-                    el.style.justifyContent = 'center';
-                    el.style.alignItems = 'center';
-                    el.style.fontSize = '20px';
-                }
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') jump();
+        });
+        window.addEventListener('touchstart', jump);
+        window.addEventListener('mousedown', jump);
 
-                el.style.left = `calc(${lanes[randomLane]}% - 20px)`;
-                el.style.top = '-50px';
-                container.appendChild(el);
-                
-                entities.push({
-                    el: el,
-                    lane: randomLane,
-                    top: -50,
-                    type: isCoin ? 'coin' : 'obstacle'
-                });
+        // Check Collisions
+        function checkCollision(rect1, rect2) {
+            return (
+                rect1.x < rect2.x + rect2.size &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.size &&
+                rect1.y + rect1.height > rect2.y
+            );
+        }
+
+        // Game Over function
+        function gameOver() {
+            isPlaying = false;
+            bgMusic.pause();
+            alert("GAME OVER! Your Score: " + score);
+            startScreen.style.display = 'block';
+            canvas.style.display = 'none';
+            ui.style.display = 'none';
+        }
+
+        // Main Animation loop
+        function animate() {
+            if (!isPlaying) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Ground Line
+            ctx.fillStyle = "#00df89";
+            ctx.fillRect(0, neymar.groundY + neymar.height, canvas.width, 200);
+
+            // Neymar Physics
+            neymar.y += neymar.vy;
+            if (neymar.y < neymar.groundY) {
+                neymar.vy += neymar.weight;
+            } else {
+                neymar.y = neymar.groundY;
+                neymar.vy = 0;
+                neymar.isJumping = false;
             }
 
-            // Move entities
-            for (let i = entities.length - 1; i >= 0; i--) {
-                let ent = entities[i];
-                ent.top += gameSpeed;
-                ent.el.style.top = ent.top + 'px';
+            // Draw Neymar
+            ctx.drawImage(neymar.image, neymar.x, neymar.y, neymar.width, neymar.height);
 
-                let containerHeight = container.clientHeight;
-                if (ent.top > containerHeight - 140 && ent.top < containerHeight - 40 && ent.lane === currentLane) {
-                    if (ent.type === 'obstacle') {
-                        gameOver();
-                        return;
-                    } else if (ent.type === 'coin') {
-                        coins++;
-                        coinsEl.innerText = coins;
-                        ent.el.remove();
-                        entities.splice(i, 1);
-                        continue;
+            // Spawn Obstacles
+            if (gameFrame % 100 === 0) {
+                obstacles.push(new Obstacle());
+            }
+
+            // Update Obstacles
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].update();
+
+                // Check collision
+                if (checkCollision(neymar, obstacles[i])) {
+                    gameOver();
+                    return;
+                }
+
+                // Increase score & remove old obstacles
+                if (obstacles[i].x + obstacles[i].size < 0) {
+                    score++;
+                    scoreVal.innerText = score;
+                    obstacles.splice(i, 1);
+                    i--;
+                    
+                    // Speed up game slowly
+                    if (score % 5 === 0) {
+                        obstacleSpeed += 1;
                     }
                 }
-
-                if (ent.top > containerHeight) {
-                    ent.el.remove();
-                    entities.splice(i, 1);
-                }
             }
-        }
-        requestAnimationFrame(update);
-    }
 
-    requestAnimationFrame(update);
-</script>
+            gameFrame++;
+            requestAnimationFrame(animate);
+        }
+
+        startButton.addEventListener('click', startGame);
+    </script>
 </body>
 </html>
-
